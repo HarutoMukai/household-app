@@ -1,14 +1,21 @@
 function PaymentMethodSummary({ data }) {
+  const maxTotal = data.reduce((max, row) => Math.max(max, row.total), 0)
+
   return (
     <section className="card">
       <h2>支払い方法別支出合計</h2>
       {data.length === 0 ? (
-        <p>支出データがありません</p>
+        <p className="empty-message">まだ支出の登録がありません</p>
       ) : (
-        <ul>
+        <ul className="stat-list">
           {data.map((row) => (
-            <li key={row.payment_method}>
-              {row.payment_method}: {Number(row.total).toLocaleString()}円
+            <li key={row.payment_method} className="stat-row">
+              <div
+                className="stat-row-fill"
+                style={{ width: `${maxTotal ? (row.total / maxTotal) * 100 : 0}%` }}
+              />
+              <span className="stat-label">{row.payment_method}</span>
+              <span className="stat-value">{Number(row.total).toLocaleString()}円</span>
             </li>
           ))}
         </ul>

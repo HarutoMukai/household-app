@@ -56,15 +56,25 @@ function App() {
 
   return (
     <div className="app">
-      <h1>家計簿アプリ</h1>
+      <header className="app-header">
+        <h1>家計簿アプリ</h1>
+        <p className="app-tagline">日々の収支を記録して、カテゴリ・支払い方法別に集計できます</p>
+      </header>
+
       {error && <p className="error">{error}</p>}
-      <GoalProgress progress={goalProgress} />
-      <GoalForm goal={goal} onUpdated={loadAll} />
+
+      <div className="grid-2">
+        <GoalProgress progress={goalProgress} />
+        <GoalForm goal={goal} onUpdated={loadAll} />
+      </div>
+
       <TransactionForm onCreated={loadAll} />
-      <div className="summaries">
+
+      <div className="grid-2">
         <CategorySummary data={categorySummary} />
         <PaymentMethodSummary data={paymentMethodSummary} />
       </div>
+
       <TransactionList transactions={transactions} />
     </div>
   )

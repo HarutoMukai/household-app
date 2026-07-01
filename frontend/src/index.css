@@ -1,88 +1,327 @@
+:root {
+  --color-primary: #16794d;
+  --color-income: #16794d;
+  --color-expense: #c0392b;
+  --color-border: #e5e7eb;
+  --color-bg: #f4f5f7;
+  --color-muted: #6b7280;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
   color: #213547;
-  background-color: #ffffff;
+  background-color: var(--color-bg);
 }
 
 .app {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.app-header {
+  margin-bottom: 1.5rem;
+}
+
+.app-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.6rem;
+}
+
+.app-tagline {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
 }
 
 .card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.card h2 {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.grid-2 .card {
+  margin-bottom: 0;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.9rem;
 }
 
 .field label {
   font-size: 0.85rem;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.3rem;
+  color: var(--color-muted);
 }
 
-.summaries {
+.field input,
+.field select {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background: #fff;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(22, 121, 77, 0.15);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0 1rem;
+}
+
+.field-full {
+  grid-column: 1 / -1;
+}
+
+.inline-form {
   display: flex;
-  gap: 1rem;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.summaries .card {
+.inline-form .field {
   flex: 1;
+  min-width: 160px;
+  margin-bottom: 0;
+}
+
+button {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+button:hover:not(:disabled) {
+  background: #12603d;
+}
+
+button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.table-scroll {
+  overflow-x: auto;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 640px;
 }
 
 th,
 td {
-  border-bottom: 1px solid #eee;
-  padding: 0.4rem;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.55rem 0.5rem;
   text-align: left;
   font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+th {
+  color: var(--color-muted);
+  font-weight: 600;
+  background: #fafafa;
+}
+
+tbody tr:hover {
+  background: #fafafa;
 }
 
 td.income {
-  color: #16794d;
+  color: var(--color-income);
+  font-weight: 600;
 }
 
 td.expense {
-  color: #c0392b;
+  color: var(--color-expense);
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.badge-income {
+  background: rgba(22, 121, 77, 0.12);
+  color: var(--color-income);
+}
+
+.badge-expense {
+  background: rgba(192, 57, 43, 0.12);
+  color: var(--color-expense);
 }
 
 .error {
-  color: #c0392b;
+  color: var(--color-expense);
 }
 
-.goal-stats {
+.empty-message {
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+.stat-list {
   list-style: none;
+  margin: 0;
   padding: 0;
-  margin: 0 0 0.75rem 0;
 }
 
-.goal-stats li {
-  margin-bottom: 0.25rem;
+.stat-row {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.55rem 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  background: #f3f4f6;
+  overflow: hidden;
+}
+
+.stat-row:last-child {
+  margin-bottom: 0;
+}
+
+.stat-row-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: rgba(22, 121, 77, 0.16);
+}
+
+.stat-label,
+.stat-value {
+  position: relative;
+  z-index: 1;
+}
+
+.stat-value {
+  font-weight: 700;
+}
+
+.mini-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.mini-stat {
+  display: flex;
+  flex-direction: column;
+  padding: 0.6rem 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.mini-stat-label {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  margin-bottom: 0.2rem;
+}
+
+.mini-stat-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.mini-stat-value.income {
+  color: var(--color-income);
+}
+
+.mini-stat-value.expense {
+  color: var(--color-expense);
+}
+
+.goal-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.goal-rate {
+  color: var(--color-primary);
+  font-size: 1.1rem;
+}
+
+.goal-achieved {
+  color: var(--color-primary);
+  font-weight: 700;
 }
 
 .progress-bar {
-  background: #eee;
-  border-radius: 6px;
+  background: #e5e7eb;
+  border-radius: 999px;
   overflow: hidden;
-  height: 12px;
-  margin: 0.5rem 0;
+  height: 16px;
+  margin: 0.4rem 0 0.75rem;
 }
 
 .progress-bar-fill {
-  background: #16794d;
+  background: var(--color-primary);
   height: 100%;
-  transition: width 0.2s ease;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.progress-bar-fill.achieved {
+  background: #c99a1f;
+}
+
+@media (max-width: 480px) {
+  .app {
+    padding: 1rem 0.75rem 2rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
 }

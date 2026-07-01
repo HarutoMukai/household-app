@@ -30,20 +30,22 @@ function GoalForm({ goal, onUpdated }) {
     <form onSubmit={handleSubmit} className="card">
       <h2>目標貯金額の設定</h2>
       {error && <p className="error">{error}</p>}
-      <div className="field">
-        <label htmlFor="target_amount">目標貯金額</label>
-        <input
-          id="target_amount"
-          type="number"
-          min="1"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          required
-        />
+      <div className="inline-form">
+        <div className="field">
+          <label htmlFor="target_amount">目標貯金額</label>
+          <input
+            id="target_amount"
+            type="number"
+            min="1"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit" disabled={submitting}>
+          {submitting ? '保存中...' : goal ? '更新する' : '設定する'}
+        </button>
       </div>
-      <button type="submit" disabled={submitting}>
-        {submitting ? '保存中...' : goal ? '更新する' : '設定する'}
-      </button>
     </form>
   )
 }

@@ -11,22 +11,39 @@ function GoalProgress({ progress }) {
   return (
     <section className="card">
       <h2>目標貯金の進捗</h2>
-      <ul className="goal-stats">
-        <li>収入合計: {formatYen(income_total)}</li>
-        <li>支出合計: {formatYen(expense_total)}</li>
-        <li>現在の差額: {formatYen(balance)}</li>
-      </ul>
+      <div className="mini-stats">
+        <div className="mini-stat">
+          <span className="mini-stat-label">収入合計</span>
+          <span className="mini-stat-value income">{formatYen(income_total)}</span>
+        </div>
+        <div className="mini-stat">
+          <span className="mini-stat-label">支出合計</span>
+          <span className="mini-stat-value expense">{formatYen(expense_total)}</span>
+        </div>
+        <div className="mini-stat">
+          <span className="mini-stat-label">現在の差額</span>
+          <span className="mini-stat-value">{formatYen(balance)}</span>
+        </div>
+      </div>
+
       {target_amount == null ? (
-        <p>目標貯金額が設定されていません</p>
+        <p className="empty-message">まだ目標貯金額が設定されていません</p>
       ) : (
-        <>
-          <p>目標貯金額: {formatYen(target_amount)}</p>
-          <div className="progress-bar">
-            <div className="progress-bar-fill" style={{ width: `${barWidth}%` }} />
+        <div>
+          <div className="goal-detail-header">
+            <span>目標貯金額: {formatYen(target_amount)}</span>
+            <span className="goal-rate">{achievement_rate}%</span>
           </div>
-          <p>達成率: {achievement_rate}%</p>
-          <p>{achieved ? '目標を達成しました' : `残り必要金額: ${formatYen(remaining)}`}</p>
-        </>
+          <div className="progress-bar">
+            <div
+              className={`progress-bar-fill ${achieved ? 'achieved' : ''}`}
+              style={{ width: `${barWidth}%` }}
+            />
+          </div>
+          <p className={achieved ? 'goal-achieved' : ''}>
+            {achieved ? '目標を達成しました' : `残り必要金額: ${formatYen(remaining)}`}
+          </p>
+        </div>
       )}
     </section>
   )
