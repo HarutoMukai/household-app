@@ -11,6 +11,7 @@ import {
   getPaymentMethodSummary,
   getGoal,
   getGoalProgress,
+  deleteTransaction,
 } from './api'
 
 const initialGoalProgress = {
@@ -28,6 +29,7 @@ function App() {
   const [paymentMethodSummary, setPaymentMethodSummary] = useState([])
   const [goal, setGoal] = useState(null)
   const [goalProgress, setGoalProgress] = useState(initialGoalProgress)
+  const [editingTransaction, setEditingTransaction] = useState(null)
   const [error, setError] = useState('')
 
   const loadAll = useCallback(async () => {
@@ -54,6 +56,26 @@ function App() {
     loadAll()
   }, [loadAll])
 
+  const handleSaved = async () => {
+    setEditingTransaction(null)
+    await loadAll()
+  }
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('この収支データを削除しますか？')) {
+      return
+    }
+    try {
+      await deleteTransaction(id)
+      if (editingTransaction?.id === id) {
+        setEditingTransaction(null)
+      }
+      await loadAll()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   return (
     <div className="app">
       <header className="app-header">
@@ -68,14 +90,22 @@ function App() {
         <GoalForm goal={goal} onUpdated={loadAll} />
       </div>
 
-      <TransactionForm onCreated={loadAll} />
+      <TransactionForm
+        editingTransaction={editingTransaction}
+        onSaved={handleSaved}
+        onCancelEdit={() => setEditingTransaction(null)}
+      />
 
       <div className="grid-2">
         <CategorySummary data={categorySummary} />
         <PaymentMethodSummary data={paymentMethodSummary} />
       </div>
 
-      <TransactionList transactions={transactions} />
+      <TransactionList
+        transactions={transactions}
+        onEdit={setEditingTransaction}
+        onDelete={handleDelete}
+      />
     </div>
   )
 }

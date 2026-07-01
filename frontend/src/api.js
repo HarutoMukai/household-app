@@ -45,6 +45,18 @@ export function createTransaction(payload) {
   })
 }
 
+export function updateTransaction(id, payload) {
+  return request(`/transactions/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export function deleteTransaction(id) {
+  return request(`/transactions/${id}`, { method: 'DELETE' })
+}
+
 export function getCategorySummary() {
   return request('/summary/category')
 }

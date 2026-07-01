@@ -3,7 +3,7 @@ function formatAmount(amount, type) {
   return `${sign}${Number(amount).toLocaleString()}円`
 }
 
-function TransactionList({ transactions }) {
+function TransactionList({ transactions, onEdit, onDelete }) {
   return (
     <section className="card">
       <h2>収支一覧</h2>
@@ -21,6 +21,7 @@ function TransactionList({ transactions }) {
                 <th>カテゴリ</th>
                 <th>支払い方法</th>
                 <th>メモ</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -39,6 +40,20 @@ function TransactionList({ transactions }) {
                   <td>{t.category}</td>
                   <td>{t.payment_method ? t.payment_method : '—'}</td>
                   <td>{t.memo}</td>
+                  <td>
+                    <div className="table-actions">
+                      <button type="button" className="button-small" onClick={() => onEdit(t)}>
+                        編集
+                      </button>
+                      <button
+                        type="button"
+                        className="button-small button-danger"
+                        onClick={() => onDelete(t.id)}
+                      >
+                        削除
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

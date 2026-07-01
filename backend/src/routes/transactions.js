@@ -79,4 +79,57 @@ router.post('/', (req, res) => {
   res.status(201).json({ data: created });
 });
 
+router.put('/:id', (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ error: '不正なIDです' });
+  }
+
+  const existing = db.prepare('SELECT id FROM transactions WHERE id = ?').get(id);
+  if (!existing) {
+    return res.status(404).json({ error: '指定された収支データが見つかりません' });
+  }
+
+  const body = req.body ?? {};
+  const errors = validateTransaction(body);
+  if (errors.length > 0) {
+    return res.status(400).json({ error: errors.join(' / ') });
+  }
+
+  const { date, item_name, amount, type, category, memo } = body;
+  const payment_method = type === 'expense' ? String(body.payment_method).trim() : '';
+
+  db.prepare(
+    `UPDATE transactions
+     SET date = ?, item_name = ?, amount = ?, type = ?, category = ?, payment_method = ?, memo = ?
+     WHERE id = ?`
+  ).run(
+    date,
+    String(item_name).trim(),
+    Number(amount),
+    type,
+    category,
+    payment_method,
+    memo ? String(memo).trim() : null,
+    id
+  );
+
+  const updated = db.prepare('SELECT * FROM transactions WHERE id = ?').get(id);
+  res.json({ data: updated });
+});
+
+router.delete('/:id', (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ error: '不正なIDです' });
+  }
+
+  const result = db.prepare('DELETE FROM transactions WHERE id = ?').run(id);
+  if (result.changes === 0) {
+    return res.status(404).json({ error: '指定された収支データが見つかりません' });
+  }
+
+  res.json({ data: { id } });
+});
+
 module.exports = router;

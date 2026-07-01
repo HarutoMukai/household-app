@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { createTransaction } from '../api'
+import { useEffect, useState } from 'react'
+import { createTransaction, updateTransaction } from '../api'
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, PAYMENT_METHODS } from '../constants'
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -16,10 +16,27 @@ function makeInitialForm() {
   }
 }
 
-function TransactionForm({ onCreated }) {
+function TransactionForm({ editingTransaction, onSaved, onCancelEdit }) {
   const [form, setForm] = useState(makeInitialForm)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  const isEditing = Boolean(editingTransaction)
+
+  useEffect(() => {
+    if (editingTransaction) {
+      setForm({
+        date: editingTransaction.date,
+        item_name: editingTransaction.item_name,
+        amount: String(editingTransaction.amount),
+        type: editingTransaction.type,
+        category: editingTransaction.category,
+        payment_method: editingTransaction.payment_method || '',
+        memo: editingTransaction.memo || '',
+      })
+      setError('')
+    }
+  }, [editingTransaction])
 
   const categories = form.type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES
 
@@ -38,13 +55,18 @@ function TransactionForm({ onCreated }) {
     setError('')
     setSubmitting(true)
     try {
-      await createTransaction({
+      const payload = {
         ...form,
         amount: Number(form.amount),
         payment_method: form.type === 'expense' ? form.payment_method : '',
-      })
+      }
+      if (isEditing) {
+        await updateTransaction(editingTransaction.id, payload)
+      } else {
+        await createTransaction(payload)
+      }
       setForm((prev) => ({ ...makeInitialForm(), date: prev.date, type: prev.type }))
-      await onCreated()
+      await onSaved()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -52,9 +74,15 @@ function TransactionForm({ onCreated }) {
     }
   }
 
+  const handleCancel = () => {
+    setForm(makeInitialForm())
+    setError('')
+    onCancelEdit()
+  }
+
   return (
     <form onSubmit={handleSubmit} className="card">
-      <h2>収支の登録</h2>
+      <h2>{isEditing ? '収支の編集' : '収支の登録'}</h2>
       {error && <p className="error">{error}</p>}
       <div className="form-grid">
         <div className="field">
@@ -123,9 +151,16 @@ function TransactionForm({ onCreated }) {
           <input id="memo" type="text" name="memo" value={form.memo} onChange={handleChange} />
         </div>
       </div>
-      <button type="submit" disabled={submitting}>
-        {submitting ? '登録中...' : '登録する'}
-      </button>
+      <div className="form-actions">
+        <button type="submit" disabled={submitting}>
+          {submitting ? (isEditing ? '更新中...' : '登録中...') : isEditing ? '更新する' : '登録する'}
+        </button>
+        {isEditing && (
+          <button type="button" className="button-secondary" onClick={handleCancel}>
+            キャンセル
+          </button>
+        )}
+      </div>
     </form>
   )
 }
