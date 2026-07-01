@@ -5,6 +5,7 @@ import CategorySummary from './components/CategorySummary'
 import PaymentMethodSummary from './components/PaymentMethodSummary'
 import GoalProgress from './components/GoalProgress'
 import GoalForm from './components/GoalForm'
+import MonthFilter from './components/MonthFilter'
 import {
   getTransactions,
   getCategorySummary,
@@ -24,6 +25,7 @@ const initialGoalProgress = {
 }
 
 function App() {
+  const [month, setMonth] = useState('')
   const [transactions, setTransactions] = useState([])
   const [categorySummary, setCategorySummary] = useState([])
   const [paymentMethodSummary, setPaymentMethodSummary] = useState([])
@@ -35,11 +37,11 @@ function App() {
   const loadAll = useCallback(async () => {
     try {
       const [txs, byCategory, byPaymentMethod, goalData, progress] = await Promise.all([
-        getTransactions(),
-        getCategorySummary(),
-        getPaymentMethodSummary(),
+        getTransactions(month),
+        getCategorySummary(month),
+        getPaymentMethodSummary(month),
         getGoal(),
-        getGoalProgress(),
+        getGoalProgress(month),
       ])
       setTransactions(txs)
       setCategorySummary(byCategory)
@@ -50,7 +52,7 @@ function App() {
     } catch (err) {
       setError(err.message)
     }
-  }, [])
+  }, [month])
 
   useEffect(() => {
     loadAll()
@@ -84,6 +86,8 @@ function App() {
       </header>
 
       {error && <p className="error">{error}</p>}
+
+      <MonthFilter month={month} onChange={setMonth} />
 
       <div className="grid-2">
         <GoalProgress progress={goalProgress} />

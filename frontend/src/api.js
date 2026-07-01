@@ -1,5 +1,9 @@
 const API_BASE = '/api'
 
+function withMonth(path, month) {
+  return month ? `${path}?month=${encodeURIComponent(month)}` : path
+}
+
 async function request(path, options) {
   const url = `${API_BASE}${path}`
   let res
@@ -33,8 +37,8 @@ async function request(path, options) {
   return body?.data
 }
 
-export function getTransactions() {
-  return request('/transactions')
+export function getTransactions(month) {
+  return request(withMonth('/transactions', month))
 }
 
 export function createTransaction(payload) {
@@ -57,12 +61,12 @@ export function deleteTransaction(id) {
   return request(`/transactions/${id}`, { method: 'DELETE' })
 }
 
-export function getCategorySummary() {
-  return request('/summary/category')
+export function getCategorySummary(month) {
+  return request(withMonth('/summary/category', month))
 }
 
-export function getPaymentMethodSummary() {
-  return request('/summary/payment-method')
+export function getPaymentMethodSummary(month) {
+  return request(withMonth('/summary/payment-method', month))
 }
 
 export function getGoal() {
@@ -77,6 +81,6 @@ export function updateGoal(payload) {
   })
 }
 
-export function getGoalProgress() {
-  return request('/summary/goal-progress')
+export function getGoalProgress(month) {
+  return request(withMonth('/summary/goal-progress', month))
 }

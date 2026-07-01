@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { EXPENSE_CATEGORIES, INCOME_CATEGORIES, PAYMENT_METHODS } = require('../constants');
+const { parseMonth } = require('../month');
 
 const router = express.Router();
 
@@ -41,9 +42,17 @@ function validateTransaction(body) {
 }
 
 router.get('/', (req, res) => {
-  const rows = db
-    .prepare('SELECT * FROM transactions ORDER BY date DESC, id DESC')
-    .all();
+  const { month, error } = parseMonth(req.query.month);
+  if (error) {
+    return res.status(400).json({ error });
+  }
+
+  const rows = month
+    ? db
+        .prepare('SELECT * FROM transactions WHERE substr(date, 1, 7) = ? ORDER BY date DESC, id DESC')
+        .all(month)
+    : db.prepare('SELECT * FROM transactions ORDER BY date DESC, id DESC').all();
+
   res.json({ data: rows });
 });
 
