@@ -1,0 +1,31 @@
+const express = require('express');
+const cors = require('cors');
+require('./db');
+const transactionsRouter = require('./routes/transactions');
+const summaryRouter = require('./routes/summary');
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+app.use(cors());
+app.use(express.json());
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+app.use('/api/transactions', transactionsRouter);
+app.use('/api/summary', summaryRouter);
+
+app.use((req, res) => {
+  res.status(404).json({ error: `Not Found: ${req.method} ${req.originalUrl}` });
+});
+
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Backend server running on http://localhost:${PORT}`);
+});

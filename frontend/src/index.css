@@ -1,0 +1,64 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  color: #213547;
+  background-color: #ffffff;
+}
+
+.app {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.75rem;
+}
+
+.field label {
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.summaries {
+  display: flex;
+  gap: 1rem;
+}
+
+.summaries .card {
+  flex: 1;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border-bottom: 1px solid #eee;
+  padding: 0.4rem;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+td.income {
+  color: #16794d;
+}
+
+td.expense {
+  color: #c0392b;
+}
+
+.error {
+  color: #c0392b;
+}
