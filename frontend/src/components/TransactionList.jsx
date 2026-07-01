@@ -14,7 +14,7 @@ function TransactionList({ transactions }) {
           <thead>
             <tr>
               <th>日付</th>
-              <th>商品名</th>
+              <th>内容</th>
               <th>金額</th>
               <th>区分</th>
               <th>カテゴリ</th>
@@ -32,7 +32,7 @@ function TransactionList({ transactions }) {
                 </td>
                 <td>{t.type === 'income' ? '収入' : '支出'}</td>
                 <td>{t.category}</td>
-                <td>{t.payment_method}</td>
+                <td>{t.payment_method ? t.payment_method : '—'}</td>
                 <td>{t.memo}</td>
               </tr>
             ))}

@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../db');
+const { EXPENSE_CATEGORIES, INCOME_CATEGORIES, PAYMENT_METHODS } = require('../constants');
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ function validateTransaction(body) {
     errors.push('date は YYYY-MM-DD 形式で入力してください');
   }
   if (!body.item_name || !String(body.item_name).trim()) {
-    errors.push('item_name は必須です');
+    errors.push('内容を入力してください');
   }
 
   const amount = Number(body.amount);
@@ -21,14 +22,19 @@ function validateTransaction(body) {
     errors.push('amount は正の整数で入力してください');
   }
 
-  if (!VALID_TYPES.includes(body.type)) {
+  const type = body.type;
+  if (!VALID_TYPES.includes(type)) {
     errors.push("type は 'income' か 'expense' を指定してください");
+    return errors;
   }
-  if (!body.category || !String(body.category).trim()) {
-    errors.push('category は必須です');
+
+  const allowedCategories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+  if (!allowedCategories.includes(body.category)) {
+    errors.push(`category は次のいずれかを指定してください: ${allowedCategories.join(', ')}`);
   }
-  if (!body.payment_method || !String(body.payment_method).trim()) {
-    errors.push('payment_method は必須です');
+
+  if (type === 'expense' && !PAYMENT_METHODS.includes(body.payment_method)) {
+    errors.push(`payment_method は次のいずれかを指定してください: ${PAYMENT_METHODS.join(', ')}`);
   }
 
   return errors;
@@ -42,12 +48,14 @@ router.get('/', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const errors = validateTransaction(req.body ?? {});
+  const body = req.body ?? {};
+  const errors = validateTransaction(body);
   if (errors.length > 0) {
     return res.status(400).json({ error: errors.join(' / ') });
   }
 
-  const { date, item_name, amount, type, category, payment_method, memo } = req.body;
+  const { date, item_name, amount, type, category, memo } = body;
+  const payment_method = type === 'expense' ? String(body.payment_method).trim() : '';
 
   const result = db
     .prepare(
@@ -59,8 +67,8 @@ router.post('/', (req, res) => {
       String(item_name).trim(),
       Number(amount),
       type,
-      String(category).trim(),
-      String(payment_method).trim(),
+      category,
+      payment_method,
       memo ? String(memo).trim() : null
     );
 
