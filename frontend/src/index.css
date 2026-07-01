@@ -62,3 +62,27 @@ td.expense {
 .error {
   color: #c0392b;
 }
+
+.goal-stats {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem 0;
+}
+
+.goal-stats li {
+  margin-bottom: 0.25rem;
+}
+
+.progress-bar {
+  background: #eee;
+  border-radius: 6px;
+  overflow: hidden;
+  height: 12px;
+  margin: 0.5rem 0;
+}
+
+.progress-bar-fill {
+  background: #16794d;
+  height: 100%;
+  transition: width 0.2s ease;
+}

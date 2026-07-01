@@ -52,3 +52,19 @@ export function getCategorySummary() {
 export function getPaymentMethodSummary() {
   return request('/summary/payment-method')
 }
+
+export function getGoal() {
+  return request('/goal')
+}
+
+export function updateGoal(payload) {
+  return request('/goal', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export function getGoalProgress() {
+  return request('/summary/goal-progress')
+}

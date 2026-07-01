@@ -24,4 +24,12 @@ db.exec(`
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS goals (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    target_amount INTEGER NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )
+`);
+
 module.exports = db;
