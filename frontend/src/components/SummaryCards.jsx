@@ -3,7 +3,7 @@ function formatYen(value) {
 }
 
 function SummaryCards({ progress }) {
-  const { income_total, expense_total, balance } = progress
+  const { income_total, expense_total, balance, target_amount, achievement_rate } = progress
 
   return (
     <div className="summary-cards">
@@ -18,6 +18,14 @@ function SummaryCards({ progress }) {
       <div className={`summary-card summary-card-balance ${balance < 0 ? 'is-negative' : ''}`}>
         <span className="summary-card-label">現在の差額</span>
         <span className="summary-card-value">{formatYen(balance)}</span>
+      </div>
+      <div className="summary-card summary-card-goal">
+        <span className="summary-card-label">目標達成率</span>
+        {target_amount == null ? (
+          <span className="summary-card-value summary-card-value-muted">未設定</span>
+        ) : (
+          <span className="summary-card-value">{achievement_rate}%</span>
+        )}
       </div>
     </div>
   )

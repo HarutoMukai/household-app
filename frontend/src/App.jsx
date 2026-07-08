@@ -130,8 +130,16 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>家計簿アプリ</h1>
-        <p className="app-tagline">日々の収支を記録して、カテゴリ・支払い方法別に集計できます</p>
+        <div className="brand">
+          <div className="brand-logo" aria-hidden="true">¥</div>
+          <div className="brand-text">
+            <h1>家計簿アプリ</h1>
+            <p className="app-tagline">収支の記録・集計・予算管理をひとつの画面で</p>
+          </div>
+        </div>
+        <span className={`view-chip ${month ? 'view-chip-month' : ''}`}>
+          {month ? `${month} を表示中` : '全期間を表示中'}
+        </span>
       </header>
 
       {error && <p className="error">{error}</p>}

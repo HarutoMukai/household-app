@@ -14,10 +14,10 @@ function GoalProgress({ progress }) {
       {target_amount == null ? (
         <p className="empty-message">まだ目標貯金額が設定されていません</p>
       ) : (
-        <div>
+        <div className="goal-progress-body">
           <div className="goal-detail-header">
-            <span>目標貯金額: {formatYen(target_amount)}</span>
-            <span className="goal-rate">{achievement_rate}%</span>
+            <span>目標 {formatYen(target_amount)}</span>
+            <span className={`goal-rate ${achieved ? 'goal-rate-achieved' : ''}`}>{achievement_rate}%</span>
           </div>
           <div className="progress-bar">
             <div
@@ -25,8 +25,8 @@ function GoalProgress({ progress }) {
               style={{ width: `${barWidth}%` }}
             />
           </div>
-          <p className={achieved ? 'goal-achieved' : ''}>
-            {achieved ? '目標を達成しました' : `残り必要金額: ${formatYen(remaining)}`}
+          <p className={`goal-status-text ${achieved ? 'goal-achieved' : ''}`}>
+            {achieved ? '目標を達成しました 🎉' : `目標まであと ${formatYen(remaining)}`}
           </p>
         </div>
       )}

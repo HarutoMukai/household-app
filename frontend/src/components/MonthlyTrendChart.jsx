@@ -20,6 +20,7 @@ function MonthlyTrendChart({ data }) {
   return (
     <section className="card">
       <h2>月別収支推移</h2>
+      <p className="hint-text">過去6か月の収入・支出（固定費込み）と差額の推移です</p>
       {!hasData ? (
         <p className="empty-message">表示できる月別データがありません</p>
       ) : (
