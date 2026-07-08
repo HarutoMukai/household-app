@@ -84,3 +84,19 @@ export function updateGoal(payload) {
 export function getGoalProgress(month) {
   return request(withMonth('/summary/goal-progress', month))
 }
+
+export function getFixedExpenses() {
+  return request('/fixed-expenses')
+}
+
+export function createFixedExpense(payload) {
+  return request('/fixed-expenses', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export function deleteFixedExpense(id) {
+  return request(`/fixed-expenses/${id}`, { method: 'DELETE' })
+}

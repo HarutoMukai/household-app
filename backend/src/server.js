@@ -4,6 +4,7 @@ require('./db');
 const transactionsRouter = require('./routes/transactions');
 const summaryRouter = require('./routes/summary');
 const goalRouter = require('./routes/goal');
+const fixedExpensesRouter = require('./routes/fixed-expenses');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -18,6 +19,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/transactions', transactionsRouter);
 app.use('/api/summary', summaryRouter);
 app.use('/api/goal', goalRouter);
+app.use('/api/fixed-expenses', fixedExpensesRouter);
 
 app.use((req, res) => {
   res.status(404).json({ error: `Not Found: ${req.method} ${req.originalUrl}` });

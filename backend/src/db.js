@@ -32,4 +32,17 @@ db.exec(`
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS fixed_expenses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    amount INTEGER NOT NULL,
+    category TEXT NOT NULL,
+    payment_method TEXT NOT NULL,
+    billing_day INTEGER NOT NULL,
+    memo TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )
+`);
+
 module.exports = db;

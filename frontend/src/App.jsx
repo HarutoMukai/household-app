@@ -6,6 +6,8 @@ import PaymentMethodSummary from './components/PaymentMethodSummary'
 import GoalProgress from './components/GoalProgress'
 import GoalForm from './components/GoalForm'
 import MonthFilter from './components/MonthFilter'
+import FixedExpenseForm from './components/FixedExpenseForm'
+import FixedExpenseList from './components/FixedExpenseList'
 import {
   getTransactions,
   getCategorySummary,
@@ -13,6 +15,8 @@ import {
   getGoal,
   getGoalProgress,
   deleteTransaction,
+  getFixedExpenses,
+  deleteFixedExpense,
 } from './api'
 
 const initialGoalProgress = {
@@ -31,23 +35,26 @@ function App() {
   const [paymentMethodSummary, setPaymentMethodSummary] = useState([])
   const [goal, setGoal] = useState(null)
   const [goalProgress, setGoalProgress] = useState(initialGoalProgress)
+  const [fixedExpenses, setFixedExpenses] = useState([])
   const [editingTransaction, setEditingTransaction] = useState(null)
   const [error, setError] = useState('')
 
   const loadAll = useCallback(async () => {
     try {
-      const [txs, byCategory, byPaymentMethod, goalData, progress] = await Promise.all([
+      const [txs, byCategory, byPaymentMethod, goalData, progress, fixed] = await Promise.all([
         getTransactions(month),
         getCategorySummary(month),
         getPaymentMethodSummary(month),
         getGoal(),
         getGoalProgress(month),
+        getFixedExpenses(),
       ])
       setTransactions(txs)
       setCategorySummary(byCategory)
       setPaymentMethodSummary(byPaymentMethod)
       setGoal(goalData)
       setGoalProgress(progress)
+      setFixedExpenses(fixed)
       setError('')
     } catch (err) {
       setError(err.message)
@@ -78,6 +85,18 @@ function App() {
     }
   }
 
+  const handleDeleteFixedExpense = async (id) => {
+    if (!window.confirm('この固定費・サブスクを削除しますか？')) {
+      return
+    }
+    try {
+      await deleteFixedExpense(id)
+      await loadAll()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   return (
     <div className="app">
       <header className="app-header">
@@ -96,6 +115,7 @@ function App() {
             onCancelEdit={() => setEditingTransaction(null)}
           />
           <GoalForm goal={goal} onUpdated={loadAll} />
+          <FixedExpenseForm onCreated={loadAll} />
         </aside>
 
         <main className="main">
@@ -105,6 +125,8 @@ function App() {
             <CategorySummary data={categorySummary} />
             <PaymentMethodSummary data={paymentMethodSummary} />
           </div>
+
+          <FixedExpenseList items={fixedExpenses} onDelete={handleDeleteFixedExpense} />
 
           <TransactionList
             transactions={transactions}

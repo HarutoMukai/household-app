@@ -337,6 +337,58 @@ td.expense {
   color: var(--color-expense);
 }
 
+.fixed-expense-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fixed-expense-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.55rem 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  background: #f3f4f6;
+}
+
+.fixed-expense-row:last-child {
+  margin-bottom: 0;
+}
+
+.fixed-expense-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.fixed-expense-name {
+  font-weight: 600;
+}
+
+.fixed-expense-meta {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fixed-expense-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.fixed-expense-amount {
+  font-weight: 700;
+  color: var(--color-expense);
+}
+
 .error {
   color: var(--color-expense);
 }
