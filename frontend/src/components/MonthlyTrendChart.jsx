@@ -25,12 +25,12 @@ function MonthlyTrendChart({ data }) {
       ) : (
         <div className="trend-chart-container">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+            <ComposedChart data={data} margin={{ top: 12, right: 24, left: 4, bottom: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} tickMargin={8} />
               <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => v.toLocaleString()} width={70} />
               <Tooltip formatter={(value) => formatYen(value)} />
-              <Legend />
+              <Legend wrapperStyle={{ fontSize: '0.85rem', paddingTop: '0.5rem' }} />
               <Bar dataKey="income_total" name="収入" fill="#16794d" radius={[4, 4, 0, 0]} />
               <Bar dataKey="total_expense" name="支出（固定費込み）" fill="#c0392b" radius={[4, 4, 0, 0]} />
               <Line type="monotone" dataKey="balance" name="差額" stroke="#213547" strokeWidth={2} dot={{ r: 3 }} />

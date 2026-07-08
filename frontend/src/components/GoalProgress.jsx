@@ -3,29 +3,14 @@ function formatYen(value) {
 }
 
 function GoalProgress({ progress }) {
-  const { income_total, expense_total, balance, target_amount, achievement_rate, remaining } = progress
+  const { target_amount, achievement_rate, remaining } = progress
 
   const barWidth = achievement_rate == null ? 0 : Math.min(Math.max(achievement_rate, 0), 100)
   const achieved = target_amount != null && remaining <= 0
 
   return (
-    <section className="card">
+    <section className="card card-compact">
       <h2>目標貯金の進捗</h2>
-      <div className="mini-stats">
-        <div className="mini-stat">
-          <span className="mini-stat-label">収入合計</span>
-          <span className="mini-stat-value income">{formatYen(income_total)}</span>
-        </div>
-        <div className="mini-stat">
-          <span className="mini-stat-label">支出合計</span>
-          <span className="mini-stat-value expense">{formatYen(expense_total)}</span>
-        </div>
-        <div className="mini-stat">
-          <span className="mini-stat-label">現在の差額</span>
-          <span className="mini-stat-value">{formatYen(balance)}</span>
-        </div>
-      </div>
-
       {target_amount == null ? (
         <p className="empty-message">まだ目標貯金額が設定されていません</p>
       ) : (

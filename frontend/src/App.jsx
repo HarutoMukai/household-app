@@ -4,6 +4,7 @@ import TransactionList from './components/TransactionList'
 import CategorySummary from './components/CategorySummary'
 import PaymentMethodSummary from './components/PaymentMethodSummary'
 import GoalProgress from './components/GoalProgress'
+import SummaryCards from './components/SummaryCards'
 import GoalForm from './components/GoalForm'
 import MonthFilter from './components/MonthFilter'
 import FixedExpenseForm from './components/FixedExpenseForm'
@@ -149,6 +150,8 @@ function App() {
         </aside>
 
         <main className="main">
+          <SummaryCards progress={goalProgress} />
+
           <GoalProgress progress={goalProgress} />
 
           <MonthlyTrendChart data={monthlyTrend} />
