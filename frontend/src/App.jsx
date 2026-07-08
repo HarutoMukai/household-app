@@ -8,6 +8,8 @@ import GoalForm from './components/GoalForm'
 import MonthFilter from './components/MonthFilter'
 import FixedExpenseForm from './components/FixedExpenseForm'
 import FixedExpenseList from './components/FixedExpenseList'
+import BudgetForm from './components/BudgetForm'
+import BudgetAlerts from './components/BudgetAlerts'
 import {
   getTransactions,
   getCategorySummary,
@@ -17,6 +19,9 @@ import {
   deleteTransaction,
   getFixedExpenses,
   deleteFixedExpense,
+  getBudgets,
+  getBudgetAlerts,
+  deleteBudget,
 } from './api'
 
 const initialGoalProgress = {
@@ -36,18 +41,22 @@ function App() {
   const [goal, setGoal] = useState(null)
   const [goalProgress, setGoalProgress] = useState(initialGoalProgress)
   const [fixedExpenses, setFixedExpenses] = useState([])
+  const [budgets, setBudgets] = useState([])
+  const [budgetAlerts, setBudgetAlerts] = useState([])
   const [editingTransaction, setEditingTransaction] = useState(null)
   const [error, setError] = useState('')
 
   const loadAll = useCallback(async () => {
     try {
-      const [txs, byCategory, byPaymentMethod, goalData, progress, fixed] = await Promise.all([
+      const [txs, byCategory, byPaymentMethod, goalData, progress, fixed, budgetList, alerts] = await Promise.all([
         getTransactions(month),
         getCategorySummary(month),
         getPaymentMethodSummary(month),
         getGoal(),
         getGoalProgress(month),
         getFixedExpenses(),
+        getBudgets(),
+        getBudgetAlerts(month),
       ])
       setTransactions(txs)
       setCategorySummary(byCategory)
@@ -55,6 +64,8 @@ function App() {
       setGoal(goalData)
       setGoalProgress(progress)
       setFixedExpenses(fixed)
+      setBudgets(budgetList)
+      setBudgetAlerts(alerts)
       setError('')
     } catch (err) {
       setError(err.message)
@@ -97,6 +108,18 @@ function App() {
     }
   }
 
+  const handleDeleteBudget = async (id) => {
+    if (!window.confirm('この予算設定を削除しますか？')) {
+      return
+    }
+    try {
+      await deleteBudget(id)
+      await loadAll()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   return (
     <div className="app">
       <header className="app-header">
@@ -116,10 +139,13 @@ function App() {
           />
           <GoalForm goal={goal} onUpdated={loadAll} />
           <FixedExpenseForm onCreated={loadAll} />
+          <BudgetForm onSaved={loadAll} />
         </aside>
 
         <main className="main">
           <GoalProgress progress={goalProgress} />
+
+          <BudgetAlerts month={month} budgets={budgets} alerts={budgetAlerts} onDelete={handleDeleteBudget} />
 
           <div className="grid-2">
             <CategorySummary data={categorySummary} />

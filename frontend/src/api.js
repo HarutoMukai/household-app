@@ -100,3 +100,23 @@ export function createFixedExpense(payload) {
 export function deleteFixedExpense(id) {
   return request(`/fixed-expenses/${id}`, { method: 'DELETE' })
 }
+
+export function getBudgets() {
+  return request('/budgets')
+}
+
+export function upsertBudget(payload) {
+  return request('/budgets', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export function deleteBudget(id) {
+  return request(`/budgets/${id}`, { method: 'DELETE' })
+}
+
+export function getBudgetAlerts(month) {
+  return request(withMonth('/summary/budget-alerts', month))
+}

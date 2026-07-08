@@ -137,4 +137,80 @@ router.get('/goal-progress', (req, res) => {
   });
 });
 
+router.get('/budget-alerts', (req, res) => {
+  const { month, error } = parseMonth(req.query.month);
+  if (error) {
+    return res.status(400).json({ error });
+  }
+
+  if (!month) {
+    return res.json({ data: null });
+  }
+
+  const budgets = db.prepare('SELECT id, category, budget_amount FROM category_budgets').all();
+  const budgetMap = new Map(budgets.map((b) => [b.category, b]));
+
+  const transactionTotals = db
+    .prepare(
+      `SELECT category, SUM(amount) AS total
+       FROM transactions
+       WHERE type = 'expense' AND substr(date, 1, 7) = ?
+       GROUP BY category`
+    )
+    .all(month);
+
+  const fixedTotals = db
+    .prepare('SELECT category, SUM(amount) AS total FROM fixed_expenses GROUP BY category')
+    .all();
+
+  const usedMap = new Map();
+  for (const row of transactionTotals) {
+    usedMap.set(row.category, (usedMap.get(row.category) || 0) + row.total);
+  }
+  for (const row of fixedTotals) {
+    usedMap.set(row.category, (usedMap.get(row.category) || 0) + row.total);
+  }
+
+  const categories = new Set([...budgetMap.keys(), ...usedMap.keys()]);
+
+  const alerts = Array.from(categories).map((category) => {
+    const budget = budgetMap.get(category) ?? null;
+    const usedAmount = usedMap.get(category) || 0;
+
+    let usageRate = null;
+    let remainingAmount = null;
+    let status = 'unset';
+
+    if (budget) {
+      usageRate = Math.round((usedAmount / budget.budget_amount) * 1000) / 10;
+      remainingAmount = budget.budget_amount - usedAmount;
+      if (usageRate >= 100) {
+        status = 'over';
+      } else if (usageRate >= 80) {
+        status = 'warning';
+      } else {
+        status = 'normal';
+      }
+    }
+
+    return {
+      category,
+      budget_id: budget ? budget.id : null,
+      budget_amount: budget ? budget.budget_amount : null,
+      used_amount: usedAmount,
+      usage_rate: usageRate,
+      remaining_amount: remainingAmount,
+      status,
+    };
+  });
+
+  alerts.sort((a, b) => {
+    if (a.status === 'unset' && b.status !== 'unset') return 1;
+    if (b.status === 'unset' && a.status !== 'unset') return -1;
+    return (b.usage_rate ?? -1) - (a.usage_rate ?? -1);
+  });
+
+  res.json({ data: alerts });
+});
+
 module.exports = router;
