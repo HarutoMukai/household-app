@@ -38,7 +38,7 @@ function TransactionList({ transactions, onEdit, onDelete }) {
                     </span>
                   </td>
                   <td>{t.category}</td>
-                  <td>{t.payment_method ? t.payment_method : '—'}</td>
+                  <td>{t.type === 'income' ? '—' : t.payment_method || '—'}</td>
                   <td>{t.memo}</td>
                   <td>
                     <div className="table-actions">

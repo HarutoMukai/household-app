@@ -9,13 +9,15 @@ function MonthFilter({ month, onChange }) {
           onChange={(e) => onChange(e.target.value)}
           aria-label="対象月を選択"
         />
-        <button type="button" className="button-secondary" onClick={() => onChange('')} disabled={!month}>
-          全期間表示
-        </button>
+        {month ? (
+          <button type="button" className="button-secondary" onClick={() => onChange('')}>
+            全期間表示に戻す
+          </button>
+        ) : (
+          <span className="badge month-filter-badge">全期間表示中</span>
+        )}
       </div>
-      <p className="month-filter-status">
-        {month ? `${month} のデータを表示中` : '全期間のデータを表示中'}
-      </p>
+      {month && <p className="month-filter-status">{month} のデータを表示中</p>}
     </section>
   )
 }

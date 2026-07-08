@@ -118,6 +118,17 @@ body {
   font-size: 0.85rem;
 }
 
+.month-filter-badge {
+  background: #eceff1;
+  color: var(--color-muted);
+}
+
+.hint-text {
+  margin: -0.4rem 0 1rem;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

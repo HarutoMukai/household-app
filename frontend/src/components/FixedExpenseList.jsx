@@ -2,6 +2,7 @@ function FixedExpenseList({ items, onDelete }) {
   return (
     <section className="card">
       <h2>固定費・サブスク一覧</h2>
+      <p className="hint-text">固定費は対象月を選択したときに月別集計へ反映されます</p>
       {items.length === 0 ? (
         <p className="empty-message">まだ固定費・サブスクが登録されていません</p>
       ) : (
