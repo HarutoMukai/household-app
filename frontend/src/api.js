@@ -120,3 +120,8 @@ export function deleteBudget(id) {
 export function getBudgetAlerts(month) {
   return request(withMonth('/summary/budget-alerts', month))
 }
+
+export function getMonthlyTrend(months) {
+  const query = months ? `?months=${encodeURIComponent(months)}` : ''
+  return request(`/summary/monthly-trend${query}`)
+}

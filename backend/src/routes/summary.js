@@ -213,4 +213,56 @@ router.get('/budget-alerts', (req, res) => {
   res.json({ data: alerts });
 });
 
+function parseMonths(raw) {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || !Number.isInteger(n)) {
+    return 6;
+  }
+  return Math.min(Math.max(n, 1), 12);
+}
+
+function getRecentMonths(count) {
+  const now = new Date();
+  const months = [];
+  for (let i = count - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    months.push(`${year}-${month}`);
+  }
+  return months;
+}
+
+router.get('/monthly-trend', (req, res) => {
+  const months = parseMonths(req.query.months);
+  const monthList = getRecentMonths(months);
+
+  const fixedTotal = db.prepare('SELECT COALESCE(SUM(amount), 0) AS total FROM fixed_expenses').get().total;
+
+  const data = monthList.map((month) => {
+    const totals = db
+      .prepare(
+        `SELECT
+           COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income_total,
+           COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense_total
+         FROM transactions
+         WHERE substr(date, 1, 7) = ?`
+      )
+      .get(month);
+
+    const totalExpense = totals.expense_total + fixedTotal;
+
+    return {
+      month,
+      income_total: totals.income_total,
+      expense_total: totals.expense_total,
+      fixed_expense_total: fixedTotal,
+      total_expense: totalExpense,
+      balance: totals.income_total - totalExpense,
+    };
+  });
+
+  res.json({ data });
+});
+
 module.exports = router;

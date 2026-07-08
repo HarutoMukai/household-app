@@ -10,6 +10,7 @@ import FixedExpenseForm from './components/FixedExpenseForm'
 import FixedExpenseList from './components/FixedExpenseList'
 import BudgetForm from './components/BudgetForm'
 import BudgetAlerts from './components/BudgetAlerts'
+import MonthlyTrendChart from './components/MonthlyTrendChart'
 import {
   getTransactions,
   getCategorySummary,
@@ -22,6 +23,7 @@ import {
   getBudgets,
   getBudgetAlerts,
   deleteBudget,
+  getMonthlyTrend,
 } from './api'
 
 const initialGoalProgress = {
@@ -43,21 +45,24 @@ function App() {
   const [fixedExpenses, setFixedExpenses] = useState([])
   const [budgets, setBudgets] = useState([])
   const [budgetAlerts, setBudgetAlerts] = useState([])
+  const [monthlyTrend, setMonthlyTrend] = useState([])
   const [editingTransaction, setEditingTransaction] = useState(null)
   const [error, setError] = useState('')
 
   const loadAll = useCallback(async () => {
     try {
-      const [txs, byCategory, byPaymentMethod, goalData, progress, fixed, budgetList, alerts] = await Promise.all([
-        getTransactions(month),
-        getCategorySummary(month),
-        getPaymentMethodSummary(month),
-        getGoal(),
-        getGoalProgress(month),
-        getFixedExpenses(),
-        getBudgets(),
-        getBudgetAlerts(month),
-      ])
+      const [txs, byCategory, byPaymentMethod, goalData, progress, fixed, budgetList, alerts, trend] =
+        await Promise.all([
+          getTransactions(month),
+          getCategorySummary(month),
+          getPaymentMethodSummary(month),
+          getGoal(),
+          getGoalProgress(month),
+          getFixedExpenses(),
+          getBudgets(),
+          getBudgetAlerts(month),
+          getMonthlyTrend(),
+        ])
       setTransactions(txs)
       setCategorySummary(byCategory)
       setPaymentMethodSummary(byPaymentMethod)
@@ -66,6 +71,7 @@ function App() {
       setFixedExpenses(fixed)
       setBudgets(budgetList)
       setBudgetAlerts(alerts)
+      setMonthlyTrend(trend)
       setError('')
     } catch (err) {
       setError(err.message)
@@ -144,6 +150,8 @@ function App() {
 
         <main className="main">
           <GoalProgress progress={goalProgress} />
+
+          <MonthlyTrendChart data={monthlyTrend} />
 
           <BudgetAlerts month={month} budgets={budgets} alerts={budgetAlerts} onDelete={handleDeleteBudget} />
 
