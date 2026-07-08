@@ -21,9 +21,9 @@ body {
 }
 
 .app {
-  max-width: 1000px;
+  max-width: 1480px;
   margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+  padding: 1.5rem 1.5rem 3rem;
 }
 
 .app-header {
@@ -55,6 +55,47 @@ body {
   font-size: 1.1rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--color-border);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  position: sticky;
+  top: 1.5rem;
+}
+
+.sidebar .card {
+  margin-bottom: 0;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.main > .card,
+.main > .grid-2 {
+  margin-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
 }
 
 .month-filter-controls {
@@ -199,16 +240,63 @@ button:disabled {
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 640px;
+  min-width: 720px;
+  table-layout: fixed;
 }
 
 th,
 td {
   border-bottom: 1px solid var(--color-border);
-  padding: 0.55rem 0.5rem;
+  padding: 0.6rem 0.6rem;
   text-align: left;
   font-size: 0.9rem;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+th:nth-child(1),
+td:nth-child(1) {
+  width: 9%;
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+  width: 22%;
+  white-space: normal;
+  word-break: break-word;
+}
+
+th:nth-child(3),
+td:nth-child(3) {
+  width: 10%;
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+  width: 8%;
+}
+
+th:nth-child(5),
+td:nth-child(5) {
+  width: 11%;
+}
+
+th:nth-child(6),
+td:nth-child(6) {
+  width: 12%;
+}
+
+th:nth-child(7),
+td:nth-child(7) {
+  width: 18%;
+  white-space: normal;
+  word-break: break-word;
+}
+
+th:nth-child(8),
+td:nth-child(8) {
+  width: 10%;
 }
 
 th {
@@ -308,19 +396,20 @@ td.expense {
 .mini-stat {
   display: flex;
   flex-direction: column;
-  padding: 0.6rem 0.75rem;
+  padding: 0.85rem 1rem;
   background: #f8f9fa;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
 }
 
 .mini-stat-label {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--color-muted);
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.3rem;
 }
 
 .mini-stat-value {
-  font-size: 1.15rem;
+  font-size: 1.35rem;
   font-weight: 700;
 }
 

@@ -87,29 +87,32 @@ function App() {
 
       {error && <p className="error">{error}</p>}
 
-      <MonthFilter month={month} onChange={setMonth} />
+      <div className="layout">
+        <aside className="sidebar">
+          <MonthFilter month={month} onChange={setMonth} />
+          <TransactionForm
+            editingTransaction={editingTransaction}
+            onSaved={handleSaved}
+            onCancelEdit={() => setEditingTransaction(null)}
+          />
+          <GoalForm goal={goal} onUpdated={loadAll} />
+        </aside>
 
-      <div className="grid-2">
-        <GoalProgress progress={goalProgress} />
-        <GoalForm goal={goal} onUpdated={loadAll} />
+        <main className="main">
+          <GoalProgress progress={goalProgress} />
+
+          <div className="grid-2">
+            <CategorySummary data={categorySummary} />
+            <PaymentMethodSummary data={paymentMethodSummary} />
+          </div>
+
+          <TransactionList
+            transactions={transactions}
+            onEdit={setEditingTransaction}
+            onDelete={handleDelete}
+          />
+        </main>
       </div>
-
-      <TransactionForm
-        editingTransaction={editingTransaction}
-        onSaved={handleSaved}
-        onCancelEdit={() => setEditingTransaction(null)}
-      />
-
-      <div className="grid-2">
-        <CategorySummary data={categorySummary} />
-        <PaymentMethodSummary data={paymentMethodSummary} />
-      </div>
-
-      <TransactionList
-        transactions={transactions}
-        onEdit={setEditingTransaction}
-        onDelete={handleDelete}
-      />
     </div>
   )
 }
