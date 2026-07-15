@@ -112,12 +112,24 @@ router.get('/goal-progress', async (req, res) => {
   const incomeTotal = Number(totalsResult.rows[0].income_total);
   let expenseTotal = Number(totalsResult.rows[0].expense_total);
 
-  if (month) {
-    const fixedResult = await pool.query(
-      'SELECT COALESCE(SUM(amount), 0) AS total FROM fixed_expenses'
+  // 集計対象月数（全期間表示のみ使用）。
+  // 固定費の合算と目標額の換算の両方で同じ値を使う。
+  let monthsCount = null;
+  if (!month) {
+    const counted = await pool.query(
+      `SELECT COUNT(DISTINCT substr(date, 1, 7)) AS cnt FROM transactions`
     );
-    expenseTotal += Number(fixedResult.rows[0].total);
+    monthsCount = Math.max(Number(counted.rows[0].cnt), 1);
   }
+
+  // 固定費・サブスクの合算。
+  // 月指定時: 月額合計を1回分加算（従来どおり）。
+  // 全期間表示: 月額合計 × months_count を加算する。
+  const fixedResult = await pool.query(
+    'SELECT COALESCE(SUM(amount), 0) AS total FROM fixed_expenses'
+  );
+  const fixedMonthlyTotal = Number(fixedResult.rows[0].total);
+  expenseTotal += month ? fixedMonthlyTotal : fixedMonthlyTotal * monthsCount;
 
   const goalResult = await pool.query('SELECT target_amount, goal_type FROM goals WHERE id = 1');
   const goal = goalResult.rows[0] ?? null;
@@ -129,7 +141,6 @@ router.get('/goal-progress', async (req, res) => {
   let targetAmount = null;
   let goalType = null;
   let baseTargetAmount = null;
-  let monthsCount = null;
 
   if (goal) {
     goalType = goal.goal_type || 'monthly';
@@ -139,10 +150,6 @@ router.get('/goal-progress', async (req, res) => {
       targetAmount =
         goalType === 'yearly' ? Math.round(baseTargetAmount / 12) : baseTargetAmount;
     } else {
-      const counted = await pool.query(
-        `SELECT COUNT(DISTINCT substr(date, 1, 7)) AS cnt FROM transactions`
-      );
-      monthsCount = Math.max(Number(counted.rows[0].cnt), 1);
       targetAmount =
         goalType === 'yearly'
           ? Math.round((baseTargetAmount * monthsCount) / 12)
