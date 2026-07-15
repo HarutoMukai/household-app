@@ -1,5 +1,5 @@
 const express = require('express');
-const db = require('../db');
+const pool = require('../pg');
 const { EXPENSE_CATEGORIES } = require('../constants');
 
 const router = express.Router();
@@ -19,36 +19,39 @@ function validateBudget(body) {
   return errors;
 }
 
-router.get('/', (req, res) => {
-  const rows = db.prepare('SELECT * FROM category_budgets ORDER BY category ASC').all();
-  res.json({ data: rows });
+router.get('/', async (req, res) => {
+  const result = await pool.query('SELECT * FROM category_budgets ORDER BY category ASC');
+  res.json({ data: result.rows });
 });
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const body = req.body ?? {};
   const errors = validateBudget(body);
   if (errors.length > 0) {
     return res.status(400).json({ error: errors.join(' / ') });
   }
 
-  db.prepare(
-    `INSERT INTO category_budgets (category, budget_amount, updated_at)
-     VALUES (?, ?, datetime('now'))
-     ON CONFLICT(category) DO UPDATE SET budget_amount = excluded.budget_amount, updated_at = excluded.updated_at`
-  ).run(body.category, Number(body.budget_amount));
+  const result = await pool.query(
+    `INSERT INTO category_budgets (category, budget_amount)
+     VALUES ($1, $2)
+     ON CONFLICT (category) DO UPDATE SET
+       budget_amount = EXCLUDED.budget_amount,
+       updated_at = NOW()
+     RETURNING *`,
+    [body.category, Number(body.budget_amount)]
+  );
 
-  const saved = db.prepare('SELECT * FROM category_budgets WHERE category = ?').get(body.category);
-  res.status(201).json({ data: saved });
+  res.status(201).json({ data: result.rows[0] });
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: '不正なIDです' });
   }
 
-  const result = db.prepare('DELETE FROM category_budgets WHERE id = ?').run(id);
-  if (result.changes === 0) {
+  const result = await pool.query('DELETE FROM category_budgets WHERE id = $1', [id]);
+  if (result.rowCount === 0) {
     return res.status(404).json({ error: '指定された予算が見つかりません' });
   }
 

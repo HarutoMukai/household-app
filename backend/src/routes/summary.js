@@ -1,128 +1,131 @@
 const express = require('express');
-const db = require('../db');
+const pool = require('../pg');
 const { parseMonth } = require('../month');
 
 const router = express.Router();
 
+// PostgreSQL の SUM()/COUNT() は文字列で返るため、集計値は必ず Number() で数値化する
+
 function mergeTotals(rowsA, rowsB, key) {
   const totals = new Map();
   for (const row of rowsA) {
-    totals.set(row[key], (totals.get(row[key]) || 0) + row.total);
+    totals.set(row[key], (totals.get(row[key]) || 0) + Number(row.total));
   }
   for (const row of rowsB) {
-    totals.set(row[key], (totals.get(row[key]) || 0) + row.total);
+    totals.set(row[key], (totals.get(row[key]) || 0) + Number(row.total));
   }
   return Array.from(totals.entries())
     .map(([value, total]) => ({ [key]: value, total }))
     .sort((a, b) => b.total - a.total);
 }
 
-router.get('/category', (req, res) => {
+router.get('/category', async (req, res) => {
   const { month, error } = parseMonth(req.query.month);
   if (error) {
     return res.status(400).json({ error });
   }
 
   if (!month) {
-    const rows = db
-      .prepare(
-        `SELECT category, SUM(amount) AS total
-         FROM transactions
-         WHERE type = 'expense'
-         GROUP BY category
-         ORDER BY total DESC`
-      )
-      .all();
-    return res.json({ data: rows });
-  }
-
-  const transactionTotals = db
-    .prepare(
+    const result = await pool.query(
       `SELECT category, SUM(amount) AS total
        FROM transactions
-       WHERE type = 'expense' AND substr(date, 1, 7) = ?
-       GROUP BY category`
-    )
-    .all(month);
+       WHERE type = 'expense'
+       GROUP BY category
+       ORDER BY total DESC`
+    );
+    return res.json({
+      data: result.rows.map((r) => ({ category: r.category, total: Number(r.total) })),
+    });
+  }
 
-  const fixedTotals = db
-    .prepare('SELECT category, SUM(amount) AS total FROM fixed_expenses GROUP BY category')
-    .all();
+  const transactionTotals = await pool.query(
+    `SELECT category, SUM(amount) AS total
+     FROM transactions
+     WHERE type = 'expense' AND substr(date, 1, 7) = $1
+     GROUP BY category`,
+    [month]
+  );
 
-  res.json({ data: mergeTotals(transactionTotals, fixedTotals, 'category') });
+  const fixedTotals = await pool.query(
+    'SELECT category, SUM(amount) AS total FROM fixed_expenses GROUP BY category'
+  );
+
+  res.json({ data: mergeTotals(transactionTotals.rows, fixedTotals.rows, 'category') });
 });
 
-router.get('/payment-method', (req, res) => {
+router.get('/payment-method', async (req, res) => {
   const { month, error } = parseMonth(req.query.month);
   if (error) {
     return res.status(400).json({ error });
   }
 
   if (!month) {
-    const rows = db
-      .prepare(
-        `SELECT payment_method, SUM(amount) AS total
-         FROM transactions
-         WHERE type = 'expense'
-         GROUP BY payment_method
-         ORDER BY total DESC`
-      )
-      .all();
-    return res.json({ data: rows });
-  }
-
-  const transactionTotals = db
-    .prepare(
+    const result = await pool.query(
       `SELECT payment_method, SUM(amount) AS total
        FROM transactions
-       WHERE type = 'expense' AND substr(date, 1, 7) = ?
-       GROUP BY payment_method`
-    )
-    .all(month);
+       WHERE type = 'expense'
+       GROUP BY payment_method
+       ORDER BY total DESC`
+    );
+    return res.json({
+      data: result.rows.map((r) => ({ payment_method: r.payment_method, total: Number(r.total) })),
+    });
+  }
 
-  const fixedTotals = db
-    .prepare('SELECT payment_method, SUM(amount) AS total FROM fixed_expenses GROUP BY payment_method')
-    .all();
+  const transactionTotals = await pool.query(
+    `SELECT payment_method, SUM(amount) AS total
+     FROM transactions
+     WHERE type = 'expense' AND substr(date, 1, 7) = $1
+     GROUP BY payment_method`,
+    [month]
+  );
 
-  res.json({ data: mergeTotals(transactionTotals, fixedTotals, 'payment_method') });
+  const fixedTotals = await pool.query(
+    'SELECT payment_method, SUM(amount) AS total FROM fixed_expenses GROUP BY payment_method'
+  );
+
+  res.json({ data: mergeTotals(transactionTotals.rows, fixedTotals.rows, 'payment_method') });
 });
 
-router.get('/goal-progress', (req, res) => {
+router.get('/goal-progress', async (req, res) => {
   const { month, error } = parseMonth(req.query.month);
   if (error) {
     return res.status(400).json({ error });
   }
 
-  const totals = month
-    ? db
-        .prepare(
-          `SELECT
-             COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income_total,
-             COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense_total
-           FROM transactions
-           WHERE substr(date, 1, 7) = ?`
-        )
-        .get(month)
-    : db
-        .prepare(
-          `SELECT
-             COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income_total,
-             COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense_total
-           FROM transactions`
-        )
-        .get();
+  const totalsResult = month
+    ? await pool.query(
+        `SELECT
+           COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income_total,
+           COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense_total
+         FROM transactions
+         WHERE substr(date, 1, 7) = $1`,
+        [month]
+      )
+    : await pool.query(
+        `SELECT
+           COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income_total,
+           COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense_total
+         FROM transactions`
+      );
 
-  let expenseTotal = totals.expense_total;
+  const incomeTotal = Number(totalsResult.rows[0].income_total);
+  let expenseTotal = Number(totalsResult.rows[0].expense_total);
+
   if (month) {
-    const fixedTotal = db.prepare('SELECT COALESCE(SUM(amount), 0) AS total FROM fixed_expenses').get();
-    expenseTotal += fixedTotal.total;
+    const fixedResult = await pool.query(
+      'SELECT COALESCE(SUM(amount), 0) AS total FROM fixed_expenses'
+    );
+    expenseTotal += Number(fixedResult.rows[0].total);
   }
 
-  const goal = db.prepare('SELECT target_amount, goal_type FROM goals WHERE id = 1').get();
+  const goalResult = await pool.query('SELECT target_amount, goal_type FROM goals WHERE id = 1');
+  const goal = goalResult.rows[0] ?? null;
 
   // 目標種類に応じて比較対象額を換算する。
   // 月表示: monthly はそのまま、yearly は ÷12。
-  // 全期間表示: 収支データが存在する実際の月数分を掛ける（無条件に12倍しない）。
+  // 全期間表示: 収支データが実際に存在する月数分で換算する（無条件に12倍しない）。
+  // yearly の全期間換算は Math.round(base * monthsCount / 12) と最後に1回だけ丸める。
   let targetAmount = null;
   let goalType = null;
   let baseTargetAmount = null;
@@ -131,27 +134,30 @@ router.get('/goal-progress', (req, res) => {
   if (goal) {
     goalType = goal.goal_type || 'monthly';
     baseTargetAmount = goal.target_amount;
-    const monthlyEquivalent = goalType === 'yearly' ? goal.target_amount / 12 : goal.target_amount;
 
     if (month) {
-      targetAmount = Math.round(monthlyEquivalent);
+      targetAmount =
+        goalType === 'yearly' ? Math.round(baseTargetAmount / 12) : baseTargetAmount;
     } else {
-      const counted = db
-        .prepare(`SELECT COUNT(DISTINCT substr(date, 1, 7)) AS cnt FROM transactions`)
-        .get();
-      monthsCount = Math.max(counted.cnt, 1);
-      targetAmount = Math.round(monthlyEquivalent * monthsCount);
+      const counted = await pool.query(
+        `SELECT COUNT(DISTINCT substr(date, 1, 7)) AS cnt FROM transactions`
+      );
+      monthsCount = Math.max(Number(counted.rows[0].cnt), 1);
+      targetAmount =
+        goalType === 'yearly'
+          ? Math.round((baseTargetAmount * monthsCount) / 12)
+          : baseTargetAmount * monthsCount;
     }
   }
 
-  const balance = totals.income_total - expenseTotal;
+  const balance = incomeTotal - expenseTotal;
 
   const achievementRate = targetAmount ? Math.round((balance / targetAmount) * 1000) / 10 : null;
   const remaining = targetAmount !== null ? targetAmount - balance : null;
 
   res.json({
     data: {
-      income_total: totals.income_total,
+      income_total: incomeTotal,
       expense_total: expenseTotal,
       balance,
       target_amount: targetAmount,
@@ -164,7 +170,7 @@ router.get('/goal-progress', (req, res) => {
   });
 });
 
-router.get('/budget-alerts', (req, res) => {
+router.get('/budget-alerts', async (req, res) => {
   const { month, error } = parseMonth(req.query.month);
   if (error) {
     return res.status(400).json({ error });
@@ -174,28 +180,29 @@ router.get('/budget-alerts', (req, res) => {
     return res.json({ data: null });
   }
 
-  const budgets = db.prepare('SELECT id, category, budget_amount FROM category_budgets').all();
-  const budgetMap = new Map(budgets.map((b) => [b.category, b]));
+  const budgetsResult = await pool.query(
+    'SELECT id, category, budget_amount FROM category_budgets'
+  );
+  const budgetMap = new Map(budgetsResult.rows.map((b) => [b.category, b]));
 
-  const transactionTotals = db
-    .prepare(
-      `SELECT category, SUM(amount) AS total
-       FROM transactions
-       WHERE type = 'expense' AND substr(date, 1, 7) = ?
-       GROUP BY category`
-    )
-    .all(month);
+  const transactionTotals = await pool.query(
+    `SELECT category, SUM(amount) AS total
+     FROM transactions
+     WHERE type = 'expense' AND substr(date, 1, 7) = $1
+     GROUP BY category`,
+    [month]
+  );
 
-  const fixedTotals = db
-    .prepare('SELECT category, SUM(amount) AS total FROM fixed_expenses GROUP BY category')
-    .all();
+  const fixedTotals = await pool.query(
+    'SELECT category, SUM(amount) AS total FROM fixed_expenses GROUP BY category'
+  );
 
   const usedMap = new Map();
-  for (const row of transactionTotals) {
-    usedMap.set(row.category, (usedMap.get(row.category) || 0) + row.total);
+  for (const row of transactionTotals.rows) {
+    usedMap.set(row.category, (usedMap.get(row.category) || 0) + Number(row.total));
   }
-  for (const row of fixedTotals) {
-    usedMap.set(row.category, (usedMap.get(row.category) || 0) + row.total);
+  for (const row of fixedTotals.rows) {
+    usedMap.set(row.category, (usedMap.get(row.category) || 0) + Number(row.total));
   }
 
   const categories = new Set([...budgetMap.keys(), ...usedMap.keys()]);
@@ -260,34 +267,39 @@ function getRecentMonths(count) {
   return months;
 }
 
-router.get('/monthly-trend', (req, res) => {
+router.get('/monthly-trend', async (req, res) => {
   const months = parseMonths(req.query.months);
   const monthList = getRecentMonths(months);
 
-  const fixedTotal = db.prepare('SELECT COALESCE(SUM(amount), 0) AS total FROM fixed_expenses').get().total;
+  const fixedResult = await pool.query(
+    'SELECT COALESCE(SUM(amount), 0) AS total FROM fixed_expenses'
+  );
+  const fixedTotal = Number(fixedResult.rows[0].total);
 
-  const data = monthList.map((month) => {
-    const totals = db
-      .prepare(
-        `SELECT
-           COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income_total,
-           COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense_total
-         FROM transactions
-         WHERE substr(date, 1, 7) = ?`
-      )
-      .get(month);
+  const data = [];
+  for (const month of monthList) {
+    const totalsResult = await pool.query(
+      `SELECT
+         COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income_total,
+         COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense_total
+       FROM transactions
+       WHERE substr(date, 1, 7) = $1`,
+      [month]
+    );
 
-    const totalExpense = totals.expense_total + fixedTotal;
+    const incomeTotal = Number(totalsResult.rows[0].income_total);
+    const expenseTotal = Number(totalsResult.rows[0].expense_total);
+    const totalExpense = expenseTotal + fixedTotal;
 
-    return {
+    data.push({
       month,
-      income_total: totals.income_total,
-      expense_total: totals.expense_total,
+      income_total: incomeTotal,
+      expense_total: expenseTotal,
       fixed_expense_total: fixedTotal,
       total_expense: totalExpense,
-      balance: totals.income_total - totalExpense,
-    };
-  });
+      balance: incomeTotal - totalExpense,
+    });
+  }
 
   res.json({ data });
 });

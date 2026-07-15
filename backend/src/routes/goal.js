@@ -1,5 +1,5 @@
 const express = require('express');
-const db = require('../db');
+const pool = require('../pg');
 
 const router = express.Router();
 
@@ -20,14 +20,14 @@ function validateGoal(body) {
   return errors;
 }
 
-router.get('/', (req, res) => {
-  const goal = db
-    .prepare('SELECT target_amount, goal_type, updated_at FROM goals WHERE id = 1')
-    .get();
-  res.json({ data: goal ?? null });
+router.get('/', async (req, res) => {
+  const result = await pool.query(
+    'SELECT target_amount, goal_type, updated_at FROM goals WHERE id = 1'
+  );
+  res.json({ data: result.rows[0] ?? null });
 });
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const body = req.body ?? {};
   const errors = validateGoal(body);
   if (errors.length > 0) {
@@ -36,19 +36,18 @@ router.post('/', (req, res) => {
 
   const goalType = body.goal_type ?? 'monthly';
 
-  db.prepare(
+  const result = await pool.query(
     `INSERT INTO goals (id, target_amount, goal_type, updated_at)
-     VALUES (1, ?, ?, datetime('now'))
-     ON CONFLICT(id) DO UPDATE SET
-       target_amount = excluded.target_amount,
-       goal_type = excluded.goal_type,
-       updated_at = excluded.updated_at`
-  ).run(Number(body.target_amount), goalType);
+     VALUES (1, $1, $2, NOW())
+     ON CONFLICT (id) DO UPDATE SET
+       target_amount = EXCLUDED.target_amount,
+       goal_type = EXCLUDED.goal_type,
+       updated_at = EXCLUDED.updated_at
+     RETURNING target_amount, goal_type, updated_at`,
+    [Number(body.target_amount), goalType]
+  );
 
-  const goal = db
-    .prepare('SELECT target_amount, goal_type, updated_at FROM goals WHERE id = 1')
-    .get();
-  res.json({ data: goal });
+  res.json({ data: result.rows[0] });
 });
 
 module.exports = router;

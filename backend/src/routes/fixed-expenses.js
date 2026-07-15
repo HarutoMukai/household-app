@@ -1,5 +1,5 @@
 const express = require('express');
-const db = require('../db');
+const pool = require('../pg');
 const { EXPENSE_CATEGORIES, PAYMENT_METHODS } = require('../constants');
 
 const router = express.Router();
@@ -32,46 +32,45 @@ function validateFixedExpense(body) {
   return errors;
 }
 
-router.get('/', (req, res) => {
-  const rows = db
-    .prepare('SELECT * FROM fixed_expenses ORDER BY billing_day ASC, id DESC')
-    .all();
-  res.json({ data: rows });
+router.get('/', async (req, res) => {
+  const result = await pool.query(
+    'SELECT * FROM fixed_expenses ORDER BY billing_day ASC, id DESC'
+  );
+  res.json({ data: result.rows });
 });
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const body = req.body ?? {};
   const errors = validateFixedExpense(body);
   if (errors.length > 0) {
     return res.status(400).json({ error: errors.join(' / ') });
   }
 
-  const result = db
-    .prepare(
-      `INSERT INTO fixed_expenses (name, amount, category, payment_method, billing_day, memo)
-       VALUES (?, ?, ?, ?, ?, ?)`
-    )
-    .run(
+  const result = await pool.query(
+    `INSERT INTO fixed_expenses (name, amount, category, payment_method, billing_day, memo)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     RETURNING *`,
+    [
       String(body.name).trim(),
       Number(body.amount),
       body.category,
       body.payment_method,
       Number(body.billing_day),
-      body.memo ? String(body.memo).trim() : null
-    );
+      body.memo ? String(body.memo).trim() : null,
+    ]
+  );
 
-  const created = db.prepare('SELECT * FROM fixed_expenses WHERE id = ?').get(result.lastInsertRowid);
-  res.status(201).json({ data: created });
+  res.status(201).json({ data: result.rows[0] });
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: '不正なIDです' });
   }
 
-  const result = db.prepare('DELETE FROM fixed_expenses WHERE id = ?').run(id);
-  if (result.changes === 0) {
+  const result = await pool.query('DELETE FROM fixed_expenses WHERE id = $1', [id]);
+  if (result.rowCount === 0) {
     return res.status(404).json({ error: '指定された固定費が見つかりません' });
   }
 
