@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-require('./db');
 const pool = require('./pg');
 const { initSchema } = require('./schema');
 const transactionsRouter = require('./routes/transactions');
