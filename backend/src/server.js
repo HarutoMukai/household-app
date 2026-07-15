@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('./db');
+const pool = require('./pg');
 const transactionsRouter = require('./routes/transactions');
 const summaryRouter = require('./routes/summary');
 const goalRouter = require('./routes/goal');
@@ -13,8 +14,14 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+app.get('/api/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok', database: 'postgresql' });
+  } catch (err) {
+    console.error('PostgreSQL接続エラー:', err.message);
+    res.status(500).json({ error: 'データベースに接続できません' });
+  }
 });
 
 app.use('/api/transactions', transactionsRouter);
