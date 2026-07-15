@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('./db');
 const pool = require('./pg');
+const { initSchema } = require('./schema');
 const transactionsRouter = require('./routes/transactions');
 const summaryRouter = require('./routes/summary');
 const goalRouter = require('./routes/goal');
@@ -39,6 +40,14 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend server running on http://localhost:${PORT}`);
-});
+initSchema(pool)
+  .then(() => {
+    console.log('PostgreSQL: テーブル初期化完了');
+    app.listen(PORT, () => {
+      console.log(`Backend server running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('PostgreSQL: テーブル初期化に失敗しました:', err.message);
+    process.exit(1);
+  });
