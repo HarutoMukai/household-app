@@ -28,9 +28,16 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS goals (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     target_amount INTEGER NOT NULL,
+    goal_type TEXT NOT NULL DEFAULT 'monthly' CHECK (goal_type IN ('monthly', 'yearly')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `);
+
+// 既存DBに goal_type 列がなければ追加する（既存の目標は monthly 扱い）
+const goalColumns = db.prepare(`PRAGMA table_info('goals')`).all();
+if (!goalColumns.some((col) => col.name === 'goal_type')) {
+  db.exec(`ALTER TABLE goals ADD COLUMN goal_type TEXT NOT NULL DEFAULT 'monthly'`);
+}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS fixed_expenses (

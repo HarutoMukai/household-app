@@ -118,8 +118,32 @@ router.get('/goal-progress', (req, res) => {
     expenseTotal += fixedTotal.total;
   }
 
-  const goal = db.prepare('SELECT target_amount FROM goals WHERE id = 1').get();
-  const targetAmount = goal ? goal.target_amount : null;
+  const goal = db.prepare('SELECT target_amount, goal_type FROM goals WHERE id = 1').get();
+
+  // 目標種類に応じて比較対象額を換算する。
+  // 月表示: monthly はそのまま、yearly は ÷12。
+  // 全期間表示: 収支データが存在する実際の月数分を掛ける（無条件に12倍しない）。
+  let targetAmount = null;
+  let goalType = null;
+  let baseTargetAmount = null;
+  let monthsCount = null;
+
+  if (goal) {
+    goalType = goal.goal_type || 'monthly';
+    baseTargetAmount = goal.target_amount;
+    const monthlyEquivalent = goalType === 'yearly' ? goal.target_amount / 12 : goal.target_amount;
+
+    if (month) {
+      targetAmount = Math.round(monthlyEquivalent);
+    } else {
+      const counted = db
+        .prepare(`SELECT COUNT(DISTINCT substr(date, 1, 7)) AS cnt FROM transactions`)
+        .get();
+      monthsCount = Math.max(counted.cnt, 1);
+      targetAmount = Math.round(monthlyEquivalent * monthsCount);
+    }
+  }
+
   const balance = totals.income_total - expenseTotal;
 
   const achievementRate = targetAmount ? Math.round((balance / targetAmount) * 1000) / 10 : null;
@@ -131,6 +155,9 @@ router.get('/goal-progress', (req, res) => {
       expense_total: expenseTotal,
       balance,
       target_amount: targetAmount,
+      base_target_amount: baseTargetAmount,
+      goal_type: goalType,
+      months_count: monthsCount,
       achievement_rate: achievementRate,
       remaining,
     },

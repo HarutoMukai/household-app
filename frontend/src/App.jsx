@@ -32,6 +32,9 @@ const initialGoalProgress = {
   expense_total: 0,
   balance: 0,
   target_amount: null,
+  base_target_amount: null,
+  goal_type: null,
+  months_count: null,
   achievement_rate: null,
   remaining: null,
 }

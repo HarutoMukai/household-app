@@ -705,6 +705,16 @@ td.expense {
   color: var(--color-primary);
 }
 
+.goal-type-badge {
+  background: rgba(21, 101, 66, 0.1);
+  color: var(--color-primary);
+  margin-right: 0.2rem;
+}
+
+.goal-conversion-note {
+  margin: 0 0 0.4rem;
+}
+
 /* ---------- 進捗バー ---------- */
 
 .progress-bar {
