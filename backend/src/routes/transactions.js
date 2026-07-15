@@ -1,5 +1,5 @@
 const express = require('express');
-const db = require('../db');
+const pool = require('../pg');
 const { EXPENSE_CATEGORIES, INCOME_CATEGORIES, PAYMENT_METHODS } = require('../constants');
 const { parseMonth } = require('../month');
 
@@ -41,22 +41,23 @@ function validateTransaction(body) {
   return errors;
 }
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const { month, error } = parseMonth(req.query.month);
   if (error) {
     return res.status(400).json({ error });
   }
 
-  const rows = month
-    ? db
-        .prepare('SELECT * FROM transactions WHERE substr(date, 1, 7) = ? ORDER BY date DESC, id DESC')
-        .all(month)
-    : db.prepare('SELECT * FROM transactions ORDER BY date DESC, id DESC').all();
+  const result = month
+    ? await pool.query(
+        'SELECT * FROM transactions WHERE substr(date, 1, 7) = $1 ORDER BY date DESC, id DESC',
+        [month]
+      )
+    : await pool.query('SELECT * FROM transactions ORDER BY date DESC, id DESC');
 
-  res.json({ data: rows });
+  res.json({ data: result.rows });
 });
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const body = req.body ?? {};
   const errors = validateTransaction(body);
   if (errors.length > 0) {
@@ -66,37 +67,28 @@ router.post('/', (req, res) => {
   const { date, item_name, amount, type, category, memo } = body;
   const payment_method = type === 'expense' ? String(body.payment_method).trim() : '';
 
-  const result = db
-    .prepare(
-      `INSERT INTO transactions (date, item_name, amount, type, category, payment_method, memo)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
-    )
-    .run(
+  const result = await pool.query(
+    `INSERT INTO transactions (date, item_name, amount, type, category, payment_method, memo)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING *`,
+    [
       date,
       String(item_name).trim(),
       Number(amount),
       type,
       category,
       payment_method,
-      memo ? String(memo).trim() : null
-    );
+      memo ? String(memo).trim() : null,
+    ]
+  );
 
-  const created = db
-    .prepare('SELECT * FROM transactions WHERE id = ?')
-    .get(result.lastInsertRowid);
-
-  res.status(201).json({ data: created });
+  res.status(201).json({ data: result.rows[0] });
 });
 
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: '不正なIDです' });
-  }
-
-  const existing = db.prepare('SELECT id FROM transactions WHERE id = ?').get(id);
-  if (!existing) {
-    return res.status(404).json({ error: '指定された収支データが見つかりません' });
   }
 
   const body = req.body ?? {};
@@ -108,33 +100,38 @@ router.put('/:id', (req, res) => {
   const { date, item_name, amount, type, category, memo } = body;
   const payment_method = type === 'expense' ? String(body.payment_method).trim() : '';
 
-  db.prepare(
+  const result = await pool.query(
     `UPDATE transactions
-     SET date = ?, item_name = ?, amount = ?, type = ?, category = ?, payment_method = ?, memo = ?
-     WHERE id = ?`
-  ).run(
-    date,
-    String(item_name).trim(),
-    Number(amount),
-    type,
-    category,
-    payment_method,
-    memo ? String(memo).trim() : null,
-    id
+     SET date = $1, item_name = $2, amount = $3, type = $4, category = $5, payment_method = $6, memo = $7
+     WHERE id = $8
+     RETURNING *`,
+    [
+      date,
+      String(item_name).trim(),
+      Number(amount),
+      type,
+      category,
+      payment_method,
+      memo ? String(memo).trim() : null,
+      id,
+    ]
   );
 
-  const updated = db.prepare('SELECT * FROM transactions WHERE id = ?').get(id);
-  res.json({ data: updated });
+  if (result.rowCount === 0) {
+    return res.status(404).json({ error: '指定された収支データが見つかりません' });
+  }
+
+  res.json({ data: result.rows[0] });
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: '不正なIDです' });
   }
 
-  const result = db.prepare('DELETE FROM transactions WHERE id = ?').run(id);
-  if (result.changes === 0) {
+  const result = await pool.query('DELETE FROM transactions WHERE id = $1', [id]);
+  if (result.rowCount === 0) {
     return res.status(404).json({ error: '指定された収支データが見つかりません' });
   }
 
